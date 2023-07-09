@@ -20,7 +20,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
 
     def ConfiguracaoInicial(self):
-        #--------------------- Configuração Pege Inicial ---------------------# 
+        #--------------------- Configuração Pagina Inicial ---------------------# 
         self.stackedWidget.setCurrentWidget(self.pg_consulta_imovel)
         self.lb_identificacao.setText("Consultar Registro Imóveis")
         self.ConsultarRegistroImovel("")
@@ -67,12 +67,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.btn_consulta.clicked.connect(self.FiltrosRegistrarImoveis)
         #--------------------------------------------------------------------#
 
-
-
         #--------------------- Configuração page Registrar imóveis ---------------------#
         #Configução QPushButton
         self.btn_registro.clicked.connect(self.BTNRegistrarImoveis)
-
         #Configução QLineEdit
         self.txt_reg_imov_preco.setValidator(QDoubleValidator(0.99,99.99,2))
         self.txt_reg_imov_desc_imov.setMaxLength(60)
@@ -95,7 +92,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.cmb_reg_imov_tp_imov.currentTextChanged.connect(self.PreencherTxtCaracteristica)
         #-------------------------------------------------------------------------------#
 
-
         #--------------------- Configuração page Alterar Registrar imóveis ---------------------#
         #Configução QPushButton
         self.btn_alterar.clicked.connect(self.BTNAlterarRegistrarImoveis)
@@ -116,8 +112,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.cmb_alt_imov_tp_imov.currentTextChanged.connect(self.PreencherTxtCaracteristicaAlteracao)
         #--------------------------------------------------------------------------------------#
 
-                
-
     def BTNConsultaAlt(self):
         #ls = Linha selecionada tabela registro imoveis pagina consulta
         ls = self.tb_lista_imov.currentRow()
@@ -127,7 +121,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.cmb_alt_imov_tp_imov.setCurrentText(self.tb_lista_imov.item(ls, 2).text())
 
             self.cmb_alt_imov_tp_negoc.setCurrentText(self.tb_lista_imov.item(ls, 3).text())
-
             self.cmb_alt_imov_status.setCurrentText(self.tb_lista_imov.item(ls, 4).text())
             self.txt_alt_imov_preco.setText(self.tb_lista_imov.item(ls, 5).text())
             self.txt_alt_imov_cond.setText(self.tb_lista_imov.item(ls, 6).text())
