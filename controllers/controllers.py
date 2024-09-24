@@ -1,9 +1,12 @@
-import sys
-from PySide6.QtWidgets import QComboBox
-from PySide6.QtCore import QCoreApplication
+
 from PySide6.QtGui import QDoubleValidator
-from PySide6.QtWidgets import QMainWindow, QMessageBox, QTableWidgetItem, QHeaderView, QAbstractItemView
+from PySide6.QtWidgets import QMainWindow
 from views.Ui_main_interface import Ui_MainWindow
+
+from controllers.connection_db import *
+from controllers.msgbox import *
+
+
 import sqlite3
 
 class MainWindow(QMainWindow, Ui_MainWindow):
@@ -12,8 +15,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.setupUi(self)
         self.setWindowTitle("Controle Regristro Imóveis")
         
+        self.path = "DB_Registro_Imovel.db"
         #-- Funções Configuração Inicialização --# 
-        self.CreateTable()
+        CreateTable(self.path)
+        
         self.ConfiguracaoInicial()
         self.ConfiguracaoButtons()
         
@@ -23,7 +28,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         #--------------------- Configuração Pagina Inicial ---------------------# 
         self.stackedWidget.setCurrentWidget(self.pg_consulta_imovel)
         self.lb_identificacao.setText("Consultar Registro Imóveis")
-        self.ConsultarRegistroImovel("")
+        ConsultarRegistroImovel(self, "")
         self.qf_home.setVisible(False)    
         
         
@@ -38,7 +43,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.btn_home_con_regist_imovel.clicked.connect(lambda: self.stackedWidget.setCurrentWidget(self.pg_consulta_imovel))        
         self.btn_home_con_regist_imovel.clicked.connect(lambda: self.qf_home.setVisible(False))
         self.btn_home_con_regist_imovel.clicked.connect(lambda: self.lb_identificacao.setText("Consultar Registro Imóveis"))
-        self.btn_home_con_regist_imovel.clicked.connect(lambda: self.ConsultarRegistroImovel(""))
+        self.btn_home_con_regist_imovel.clicked.connect(lambda: ConsultarRegistroImovel(self, ""))
         self.txt_con_imv_cep.setMaxLength(8)
         self.txt_con_imv_cep.editingFinished.connect(lambda: self.txt_con_imv_cep.setMaxLength(9))
         self.txt_con_imv_cep.editingFinished.connect(lambda: self.txt_con_imv_cep.setInputMask("00000-000"))
@@ -111,6 +116,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.cmb_alt_imov_status.currentTextChanged.connect(self.PreencherTxtCaracteristicaAlteracao)
         self.cmb_alt_imov_tp_imov.currentTextChanged.connect(self.PreencherTxtCaracteristicaAlteracao)
         #--------------------------------------------------------------------------------------#
+
 
     def BTNConsultaAlt(self):
         #ls = Linha selecionada tabela registro imoveis pagina consulta
@@ -230,6 +236,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.ptxt_reg_imov_caract.setPlainText("\n".join(caract_imovel)) 
 
+
     def BTNRegistrarImoveis(self):
         valida_campos = []
         dados = []
@@ -313,12 +320,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         if len(valida_campos) == 0:
 
-            self.RegistrarImovel(dados)
-            self.MsgFinalizado("Imóvel registrado com socesso...")
+            RegistrarImovel(self.path, dados)
+            MsgFinalizado(self, "Imóvel registrado com socesso...")
         else:
             '\n'.join(valida_campos)
             msg_info = "Por gentileza preencher todos os campos abaixo:\n"+'\n'.join(valida_campos)
-            self.MsgErro(msg_info)
+            MsgErro(self, msg_info)
 
 
     def BTNAlterarRegistrarImoveis(self):
@@ -391,7 +398,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             dados.append(f"ESTADO = '{self.txt_alt_imov_estado.text().upper()}'")
 
         if self.ptxt_alt_imov_obs.toPlainText() == "":
-            dados.append("") 
+            ...
         else:
             dados.append(f"OBSERVACAO = '{self.ptxt_alt_imov_obs.toPlainText().upper()}'")
         
@@ -406,14 +413,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             cod_imovel = self.txt_alt_imov_cod_imov.text()
             dados_alt = ", ".join(dados)
             # print(dados_alt)
-            self.AlterarRegistroImovel(cod_imovel, dados_alt)
-            self.MsgFinalizado("Registro imovel alterado com sucesso...")
+            AlterarRegistroImovel(cod_imovel, dados_alt)
+            MsgFinalizado(self, "Registro imovel alterado com sucesso...")
         else:
             '\n'.join(valida_campos)
             msg_info = "Por gentileza preencher todos os campos abaixo:\n"+'\n'.join(valida_campos)
-            self.MsgErro(msg_info)
-
-
+            MsgErro(self, msg_info)
 
 
     def FiltrosRegistrarImoveis(self):
@@ -443,94 +448,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if len(filtros) > 0:
             filtro = f"WHERE {' AND '.join(filtros)}"
 
-        self.ConsultarRegistroImovel(filtro)
+        ConsultarRegistroImovel(self, filtro)
     
-    def CreateTable(self):
-        self.conn = sqlite3.connect("DB_Registro_Imovel.db")
-        self.cursor = self.conn.cursor()
-        self.cursor.execute("CREATE TABLE IF NOT EXISTS REGISTRO_IMOVEIS ('COD_IMOVEL' INTEGER PRIMARY KEY AUTOINCREMENT, 'DESC_CURTA' TEXT,  'TIPO_IMOVEL' TEXT, 'TIPO_NEGOCIACAO' TEXT,'STATUS' TEXT, 'PRECO' REAL, 'CONDICOES' TEXT, 'CEP' TEXT, 'RUA' TEXT, 'NUMERO' TEXT, 'COMPLEMENTO' TEXT, 'BAIRRO' TEXT, 'CIDADE' TEXT, 'ESTADO' TEXT, 'CARACTERISICAS_IMOVEL' TEXT, 'OBSERVACAO' TEXT)")
-        self.conn.commit()
-        self.cursor.close()
-        self.conn.close()
-
-
-    def RegistrarImovel(self, dados):
-        self.conn = sqlite3.connect("DB_Registro_Imovel.db")
-        self.cursor = self.conn.cursor()
-        self.cursor.execute("INSERT INTO REGISTRO_IMOVEIS ('DESC_CURTA', 'TIPO_IMOVEL', 'TIPO_NEGOCIACAO', 'STATUS', 'PRECO', 'CONDICOES', 'CEP', 'RUA', 'NUMERO', 'COMPLEMENTO', 'BAIRRO', 'CIDADE', 'ESTADO', 'CARACTERISICAS_IMOVEL',  'OBSERVACAO') VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", dados)
-        self.conn.commit()
-        self.cursor.close()
-        self.conn.close()
-
-
-    def AlterarRegistroImovel(self, cod_imovel, dados):
-        self.conn = sqlite3.connect("DB_Registro_Imovel.db")
-        self.cursor = self.conn.cursor()
-        self.cursor.execute(f"""
-        UPDATE REGISTRO_IMOVEIS 
-        SET {dados} 
-        WHERE COD_IMOVEL = {int(cod_imovel)}""")
-        self.conn.commit()
-        self.cursor.close()
-        self.conn.close()
-    
-    def ConsultarRegistroImovel(self, filtros):
-        self.tb_lista_imov.clearContents()
-        self.tb_lista_imov.setRowCount(0)
-        self.tb_lista_imov.setColumnCount(0)
-
-        self.conn = sqlite3.connect("DB_Registro_Imovel.db")
-        self.cursor = self.conn.cursor()
-        self.cursor.execute(f"SELECT * FROM REGISTRO_IMOVEIS {filtros}")
-        self.registros = self.cursor.fetchall()
-
-        for column in self.cursor.description:
-            utl_coll = self.tb_lista_imov.columnCount()
-            self.tb_lista_imov.setColumnCount(utl_coll+1)
-            self.tb_lista_imov.setHorizontalHeaderItem(utl_coll, QTableWidgetItem())
-            self.tb_lista_imov.horizontalHeaderItem(utl_coll).setText(QCoreApplication.translate("MainWindowComprado", f"{column[0]}", None))
-
-
-        for row in self.registros:
-            utl_row = self.tb_lista_imov.rowCount()
-            self.tb_lista_imov.setRowCount(utl_row + 1)
-            for lc, column in enumerate(row):                    
-                self.tb_lista_imov.setItem(utl_row, lc,QTableWidgetItem(str(column)))    
-
-        tb_lista_imov= self.tb_lista_imov.horizontalHeader()
-        tb_lista_imov.setSectionResizeMode(QHeaderView.ResizeToContents) 
-        self.tb_lista_imov.setEditTriggers(QAbstractItemView.NoEditTriggers)
-
-    
-    def MsgQuestion(self, msg_info):      
-        msg = QMessageBox()
-        msg.setWindowTitle('Confirmar')        
-        msg.setInformativeText(msg_info)
-        msg.setIcon(msg.Question)            
-        msg.setStyleSheet('color:rgb(255, 255, 255); font: bold 10pt \"Cambria\"; border-color:rgb(0, 0, 108); background-color: rgb(0, 98, 98);')
-        msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
-        resp = msg.exec() 
-
-        return resp
-    
-
-    def MsgErro(self, msg_info):
-        msg = QMessageBox()
-        msg.setWindowTitle('Erro')        
-        msg.setInformativeText(msg_info)
-        msg.setStyleSheet('color:rgb(255, 255, 255); font: bold 10pt \"Cambria\"; border-color:rgb(0, 0, 108); background-color: rgb(0, 98, 98);')
-        msg.setStandardButtons(msg.Ok)
-        msg.setIcon(msg.Warning)
-        msg.exec()
-
-    def MsgFinalizado(self, msg_info):
-        msg = QMessageBox()
-        msg.setWindowTitle('Processo finalizado!') 
-        msg.setInformativeText(msg_info)
-        msg.setStyleSheet('color:rgb(255, 255, 255); font: bold 10pt \"Cambria\"; border-color:rgb(0, 0, 108); background-color: rgb(0, 98, 98);')
-        msg.setIcon(msg.Information)
-        msg.setStandardButtons(msg.Ok)
-        msg.exec()
-    
-
 
